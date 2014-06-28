@@ -88,11 +88,31 @@ span.last {
   height: 100%;
   left: -100%;
   background: #323232;
+  z-index: 10;
 }
 
 body.dark .bar .progress {
   background: #dedede;
 }
+
+.bar .tick {
+  position: absolute;
+  width: 3px;
+  margin-left: -1px;
+  height: 100%;
+  background: #bbb;
+  z-index: 20;
+}
+
+body.dark .bar .tick {
+  background: #333;
+}
+
+.bar .p20 { left: 20%; }
+.bar .p40 { left: 40%; }
+.bar .p60 { left: 60%; }
+.bar .p80 { left: 80%; }
+
 
 .cf:before,
 .cf:after {
