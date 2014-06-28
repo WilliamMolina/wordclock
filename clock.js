@@ -1,14 +1,13 @@
-// font dependent for measuing
-// we have to make sure we wait for the webfont to be load before calculating
-// or else everything is messed up.
+// must use 'onload' to make sure webfonts are ready.
 $(window).load(function(){
   
   var clock = $('#clock') // get our clock
     , width = clock.width() // find the width
-    , progress = $('.progress')
-    , last_update = null;
-
-  // this is dumb. css justify does not work on single lines.
+    , progress = $('.progress') // process bar
+    , interval = 300000 // 5 minutes 
+    , midpoint = interval / 2 // half way 2.5 minutes
+    , last_update = null; // we only want to refresh when we need to
+    
   // this manually justifies by measuring neighbor elements and resizing
   clock.find('span.middle').each(function(){
     var el = $(this);
@@ -22,38 +21,27 @@ $(window).load(function(){
   setInterval(updateClock, 100); // check time ever 1/10 of a second.... from now until forever.
   
   
+  // Functions Below
+  
+  
   function updateClock(){
-    // Get our bearings
-    // deconcstruct the current time
     var ts = new Date() // current time
-      , hour = ts.getHours() // hour 0-23
-      , min = ts.getMinutes() // minutes 0-59
-      , sec = ts.getSeconds() // seconds 0-59
-      , milli = ts.getMilliseconds() // milliseconds 0-999
-      
-      , interval = 300000 // 5 minutes
-      , midpoint = interval / 2 // half way 2.5 minutes
-      , total_millis = ((min * 60) + sec) * 1000 + milli // convert the current minute offset to milliseconds
-      , remainder = midpoint - (total_millis % midpoint) // find our remainder relative to the midpoint
-      , offset = total_millis % interval // offset based on 5 mins
+      , remainder = midpoint - (minutesMilli(ts) % midpoint) // find our remainder relative to the midpoint
+      , offset = minutesMilli(ts) % interval // offset based on 5 mins
       , diff = 100 / midpoint * remainder; // percentage of the remainder relative to the midpoint (used for moving progress bar)
       
-      
-    remainder = (offset > midpoint) ? midpoint + remainder: remainder; // if we are past midpoint we need to add time for next update. else just use.
-    
-    // if offset is greater then midpoint we want a negative else subtract from 100 (percentages)
-    // range = -100% to 100%
-    diff = (offset > midpoint) ? 0 - diff : 100 - diff;
-    //console.log(diff)
+    diff = (offset > midpoint) ? 0 - diff : 100 - diff; // range = -100% to 100%
+
     progress.css({left: diff+'%'}); // update progress bar with new offset position
     
-    // Update The clock face
-    var past = true; // this is used to know if we are closer to the current hour
-    
-    // Recycling variable from above
-    // coverting minutes to a decimal for seconds & milliseconds
-    min += sec / 60;
-    min += milli / 60 / 1000;
+    check(simpleTime(ts));
+  }
+  
+  function simpleTime(ts){
+    var past = true // this is used to know if we are closer to the current hour
+      , hour = ts.getHours()
+      , min = decimalMinute(ts);
+
     min = Math.round(min / 5) * 5; // rounding the minutes to the closes 5 minutes
 
     if(hour > 12) hour -= 12; // coverting military time to 12hr time
@@ -65,16 +53,18 @@ $(window).load(function(){
       if(min) past = false; // indicate we are closer to the next hour
     }
     
-    var serialize = [hour, min, past].join(); // serialize our current time offset
-    if(serialize !== last_update){ // check to see if the clock has changed since last update
-      last_update = serialize; // cache current for next check
-      refresh(hour, min, past); // refresh clock face
-    }
-
+    return [hour, min, past];
+  }
+  
+  function check(time){
+    if(time.join() == last_update) return;
+    last_update = time.join();
+    refresh.apply(null, time);
   }
   
   function refresh(hour, min, past){
-    clock.find('span').removeClass('active');
+    
+    clock.find('span').removeClass('active'); // clear all
     
     show('it');
     show('h'+hour);
@@ -90,6 +80,16 @@ $(window).load(function(){
   
   function show(selector){
     clock.find('span.'+selector).addClass('active');
+  }
+  
+  // converts the minutes of a `Date` instance to milliseconds
+  function minutesMilli(ts){
+    return ((ts.getMinutes() * 60) + ts.getSeconds()) * 1000 + ts.getMilliseconds();
+  }
+  
+  // converts the minutes of a `Date` instance to a decimal minute
+  function decimalMinute(ts){
+    return ts.getMinutes() + (ts.getSeconds() / 60) + (ts.getMilliseconds() / 60 / 1000);
   }
 
 });
