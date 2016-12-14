@@ -11,7 +11,7 @@ $(window).load(function(){
   // this manually justifies by measuring neighbor elements and resizing
   clock.find('span.middle').each(function(){
     var el = $(this);
-    el.width(width - (el.prev().width() + el.next().width()));
+    el.width(width - (el.prev().width() + el.next().width() + 1));
   });
 
   clock.removeClass('hide'); // show clock now that we have fixed the positioning
